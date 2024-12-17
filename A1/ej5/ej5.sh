@@ -1,13 +1,16 @@
 #!/bin/bash
-
-# Obtener la fecha actual en formato año, mes, día
 fecha=$(date +%Y%m%d)
-
-# Recorrer todos los archivos con extensión JPG en el directorio actual
-for archivo in *.jpg; do
-  # Verificar si existen archivos con extensión JPG
+for archivo in *.jpg *.JPG; do
   if [ -e "$archivo" ]; then
-    # Renombrar el archivo añadiendo el prefijo de la fecha
     mv "$archivo" "${fecha}-${archivo}"
   fi
 done
+
+
+# for archivo in *.jpg *.JPG; do
+#     if [ -f "$archivo" ]; then
+#         nombre_fecha="${fecha}-$archivo"
+#         mv "$archivo" "$nombre_fecha"
+#         echo "Archivo renombrado: $archivo -> $nombre_fecha"
+#     fi
+# done
