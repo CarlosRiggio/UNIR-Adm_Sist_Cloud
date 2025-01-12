@@ -1,4 +1,23 @@
-# Vagrantfile
+# # Vagrantfile
+# Vagrant.configure("2") do |config|
+#     # Configurar la MV con Ubuntu 16.04
+#     config.vm.box = "ubuntu/xenial64"  # Ubuntu 16.04 (Xenial Xerus)
+  
+#     # Configuración básica
+#     config.vm.network "private_network", type: "dhcp"
+#     config.vm.provider "virtualbox" do |vb|
+#       vb.memory = "1024"    # Memoria RAM de la MV
+#       vb.cpus = 2           # Número de CPUs asignadas
+#     end
+  
+#     # Configuración inicial (puedes incluir scripts)
+#     config.vm.provision "shell", inline: <<-SHELL
+#       echo "Configuración inicial de la máquina virtual"
+#       sudo apt-get update
+#       sudo apt-get install -y curl git
+#     SHELL
+#   end
+  
 Vagrant.configure("2") do |config|
     # Configurar la MV con Ubuntu 16.04
     config.vm.box = "ubuntu/xenial64"  # Ubuntu 16.04 (Xenial Xerus)
@@ -14,7 +33,15 @@ Vagrant.configure("2") do |config|
     config.vm.provision "shell", inline: <<-SHELL
       echo "Configuración inicial de la máquina virtual"
       sudo apt-get update
-      sudo apt-get install -y curl git
+      sudo apt-get install -y curl git locales
+
+      # Generar los locales y configurar el sistema
+      sudo locale-gen es_ES.UTF-8
+      sudo locale-gen en_US.UTF-8
+      sudo update-locale LANG=en_US.UTF-8 LC_CTYPE=en_US.UTF-8 LC_ALL=en_US.UTF-8
+
+      # Verificar que los locales están configurados correctamente
+      locale
+
     SHELL
-  end
-  
+end

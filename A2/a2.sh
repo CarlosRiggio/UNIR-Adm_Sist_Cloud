@@ -2,19 +2,14 @@
 
 set -e
 
-# Mensaje de inicio
-logger "Arrancando instalación y configuración de MongoDB"
-
-# Mensaje de uso
+logger "Arrancando instalacion y configuracion de MongoDB"
 USO="Uso : install.sh [opciones]
 Ejemplo:
-install.sh -f config.ini
+install.sh -f archivo_configuracion [-a]
 Opciones:
 -f archivo de configuración
 -a muestra esta ayuda
 "
-
-# Función de ayuda
 function ayuda() {
   echo "${USO}"
   if [[ ${1} ]]; then
@@ -58,29 +53,33 @@ echo "Usuario: ${user}"
 echo "Contraseña: ${password}"
 echo "Puerto: ${port}"
 
-# Preparar el repositorio de MongoDB y agregar su clave apt
+# Agregar la clave pública de MongoDB
 apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv 4B7C549A058F8B6B
+
+# Agregar el repositorio de MongoDB
 echo "deb [ arch=amd64,arm64 ] https://repo.mongodb.org/apt/ubuntu xenial/mongodb-org/4.2 multiverse" | tee /etc/apt/sources.list.d/mongodb.list
 
-# Comprobar si MongoDB ya está instalado
+# Comprobar si MongoDB 4.2.1 está instalado
 if [[ -z "$(mongo --version 2> /dev/null | grep '4.2.1')" ]]; then
-  # Instalar los paquetes necesarios
+  # Instalar MongoDB si no está instalado
   apt-get -y update \
-    && apt-get install -y \
-      mongodb-org=4.2.1 \
-      mongodb-org-server=4.2.1 \
-      mongodb-org-shell=4.2.1 \
-      mongodb-org-mongos=4.2.1 \
-      mongodb-org-tools=4.2.1 \
-    && rm -rf /var/lib/apt/lists/* \
-    && pkill -u mongodb || true \
-    && pkill -f mongod || true \
-    && rm -rf /var/lib/mongodb
+  && apt-get install -y \
+  mongodb-org=4.2.1 \
+  mongodb-org-server=4.2.1 \
+  mongodb-org-shell=4.2.1 \
+  mongodb-org-mongos=4.2.1 \
+  mongodb-org-tools=4.2.1 \
+  && rm -rf /var/lib/apt/lists/* \
+  && pkill -u mongodb || true \
+  && pkill -f mongod || true \
+  && rm -rf /var/lib/mongodb
 fi
 
-# Crear las carpetas de logs y datos con los permisos adecuados
+# Crear las carpetas de logs y datos con sus permisos
 [[ -d "/datos/bd" ]] || mkdir -p -m 755 "/datos/bd"
 [[ -d "/datos/log" ]] || mkdir -p -m 755 "/datos/log"
+
+# Establecer el dueño y el grupo de las carpetas db y log
 chown mongodb /datos/log /datos/bd
 chgrp mongodb /datos/log /datos/bd
 
@@ -105,18 +104,23 @@ security:
 MONGOD_CONF
 ) > /etc/mongod.conf
 
-logger "ANTES DE REINICIAR"
+# # Reiniciar el servicio de mongod para aplicar la nueva configuración
+# systemctl restart mongod
 
-# Reiniciar el servicio MongoDB para aplicar la nueva configuración
+# logger "Esperando a que mongod responda..."
+# sleep 15
+
+# Reiniciar el servicio de mongod para aplicar la nueva configuración
 systemctl restart mongod
 
-# Esperar hasta que el servicio MongoDB esté disponible
-logger "Esperando a que MongoDB esté disponible..."
-while ! systemctl is-active --quiet mongod; do
+# Esperar hasta que MongoDB esté completamente operativo
+echo "Esperando a que MongoDB esté listo..."
+until mongo --eval "print('MongoDB está corriendo')" > /dev/null 2>&1; do
+  echo "Esperando..."
   sleep 1
 done
 
-# Crear el usuario en MongoDB con los parámetros proporcionados
+# Crear el usuario con la password proporcionada como parámetro
 mongo admin << CREACION_DE_USUARIO
 db.createUser({
     user: "${user}",
