@@ -21,7 +21,7 @@ while getopts ":f:a" OPCION; do
         f ) CONFIG_FILE=$OPTARG
             echo "Archivo de configuración especificado como '${CONFIG_FILE}'";;
         a ) ayuda; exit 0;;
-        : ) ayuda "Falta el parametro para -$OPTARG"; exit 1;;
+        : ) ayuda "Falta el parámetro para -$OPTARG"; exit 1;;
         \?) ayuda "La opción no existe : $OPTARG"; exit 1;;
     esac
 done
@@ -45,19 +45,18 @@ if [ -z ${port} ]; then
     port=27017
 fi
 
-# Añadir clave GPG y configurar el repositorio de MongoDB
-logger "Añadiendo clave GPG y configurando el repositorio de MongoDB..."
-curl -fsSL https://www.mongodb.org/static/pgp/server-6.0.asc | sudo gpg --dearmor -o /usr/share/keyrings/mongodb-6.0.gpg
-echo "deb [ arch=amd64,signed-by=/usr/share/keyrings/mongodb-6.0.gpg ] https://repo.mongodb.org/apt/ubuntu focal/mongodb-org/6.0 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-6.0.list
+# Configurar el repositorio de MongoDB
+logger "Configurando el repositorio de MongoDB..."
+echo "deb http://archive.ubuntu.com/ubuntu xenial universe" > /etc/apt/sources.list.d/mongodb-org.list
 
 # Actualizar la lista de paquetes
 logger "Actualizando lista de paquetes..."
-sudo apt-get update
+apt-get update
 
 # Instalar MongoDB si no está instalado
-if [[ -z "$(mongo --version 2> /dev/null | grep '6.0')" ]]; then
+if [[ -z "$(mongod --version 2> /dev/null | grep '6.0')" ]]; then
     logger "Instalando MongoDB..."
-    sudo apt-get install -y mongodb-org
+    apt-get install -y mongodb
 fi
 
 # Crear las carpetas de logs y datos con sus permisos
@@ -65,13 +64,9 @@ logger "Configurando directorios de MongoDB..."
 [[ -d "/datos/bd" ]] || mkdir -p -m 755 "/datos/bd"
 [[ -d "/datos/log" ]] || mkdir -p -m 755 "/datos/log"
 
-# Establecer el dueño y el grupo de las carpetas db y log
-sudo chown mongodb /datos/log /datos/bd
-sudo chgrp mongodb /datos/log /datos/bd
-
 # Crear el archivo de configuración de mongodb con el puerto solicitado
 logger "Creando archivo de configuración de MongoDB..."
-sudo mv /etc/mongod.conf /etc/mongod.conf.orig
+mv /etc/mongod.conf /etc/mongod.conf.orig || true
 (
 cat <<MONGOD_CONF
 # /etc/mongod.conf
@@ -89,19 +84,16 @@ net:
 security:
   authorization: enabled
 MONGOD_CONF
-) | sudo tee /etc/mongod.conf
-
-# Reiniciar el servicio de mongod para aplicar la nueva configuración
-logger "Reiniciando el servicio de MongoDB..."
-# Detener cualquier instancia previa de MongoDB
-pkill -f mongod || true
+) > /etc/mongod.conf
 
 # Iniciar MongoDB manualmente con la nueva configuración
+logger "Iniciando MongoDB con la nueva configuración..."
+pkill -f mongod || true
 mongod --config /etc/mongod.conf --fork
 
 # Comprobar si MongoDB está corriendo correctamente
 logger "Comprobando si mongod está activo..."
-if systemctl is-active --quiet mongod; then
+if pgrep -f mongod > /dev/null; then
     logger "MongoDB está corriendo correctamente."
 else
     logger "Hubo un problema al iniciar MongoDB."
