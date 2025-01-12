@@ -114,6 +114,10 @@ MONGOD_CONF
 systemctl restart mongod
 
 # Esperar hasta que MongoDB esté completamente operativo
+#verifica repetidamente si MongoDB está operativo y espera 1 segundo entre cada intento.
+#Una vez que MongoDB está listo, el bucle until termina y el script puede continuar con la 
+#ejecución de otros comando
+
 echo "Esperando a que MongoDB esté listo..."
 until mongo --eval "print('MongoDB está corriendo')" > /dev/null 2>&1; do
   echo "Esperando..."
