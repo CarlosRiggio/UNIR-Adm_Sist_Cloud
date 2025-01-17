@@ -17,7 +17,6 @@ function ayuda() {
   fi
 }
 
-# Gestionar los argumentos de la línea de comandos
 while getopts ":f:a" OPCION; do
   case ${OPCION} in
     f) CONFIG_FILE=$OPTARG ;;  
@@ -34,23 +33,16 @@ fi
 source ${CONFIG_FILE}
 
 if [ -z ${user} ]; then
-  ayuda "El usuario (-u) debe ser especificado en el archivo de configuración"; exit 1
+  ayuda "No usuario encontrado"; exit 1
 fi
 
 if [ -z ${password} ]; then
-  ayuda "La contraseña (-p) debe ser especificada en el archivo de configuración"; exit 1
+  ayuda "No contraseña encontrado"; exit 1
 fi
 
 if [ -z ${port} ]; then
   port=27017  
 fi
-
-
-echo "Configuración cargada desde el archivo ${CONFIG_FILE}:"
-echo "Usuario: ${user}"
-echo "Contraseña: ${password}"
-echo "Puerto: ${port}"
-
 
 apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv 4B7C549A058F8B6B
 
@@ -102,7 +94,7 @@ MONGOD_CONF
 
 systemctl restart mongod
 
-echo "Esperando a que MongoDB esté listo..."
+
 until mongo --eval "print('MongoDB se está ejecutando')" > /dev/null 2>&1; do
   echo "Esperando..."
   sleep 1
