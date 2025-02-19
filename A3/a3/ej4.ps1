@@ -2,8 +2,8 @@ function Mostrar-Menu {
     Clear-Host
     Write-Host "1. Listar los servicios arrancados"
     Write-Host "2. Mostrar la fecha del sistema"
-    Write-Host "3. Ejecutar el Bloc de notas"
-    Write-Host "4. Ejecutar la Calculadora"
+    Write-Host "3. Bloc de notas"
+    Write-Host "4. Calculadora"
     Write-Host "5. Salir"
 }
 
